@@ -1,16 +1,18 @@
 import { ownerName, ownerNumber } from "../settings.js"
 
-export default {
-    name: "owner",
-    aliases: ["creator"],
-    ownerOnly: false,
-    execute: async (sock, m) => {
-        const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${ownerName}\nTEL:+${ownerNumber.replace("@s.whatsapp.net", "")}\nEND:VCARD`
-        await sock.sendMessage(m.key.remoteJid, { 
-            contacts: { 
-                displayName: ownerName, 
-                contacts: [{ vcard }] 
-            } 
-        }, { quoted: m })
-    }
+export const command = ["owner", "creator"]
+
+export async function run(sock, msg, { sender }) {
+    const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${ownerName}
+TEL;type=CELL;type=VOICE;waid=${ownerNumber.replace('+','')}:${ownerNumber}
+END:VCARD`
+
+    await sock.sendMessage(sender, { 
+        contacts: { 
+            displayName: ownerName, 
+            contacts: [{ vcard }] 
+        } 
+    }, { quoted: msg })
 }

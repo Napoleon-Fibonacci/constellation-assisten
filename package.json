@@ -1,13 +1,17 @@
 {
   "name": "constellation-bot",
   "version": "1.0.0",
-  "type": "module",
+  "description": "WhatsApp Bot using Ourin-Baileys",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "ourin-baileys": "^9.0.11",
     "pino": "^8.11.0"
-  }
+  },
+  "keywords": ["whatsapp", "bot", "baileys"],
+  "author": "Ditzzx",
+  "license": "MIT"
 }

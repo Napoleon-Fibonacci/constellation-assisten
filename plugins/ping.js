@@ -1,8 +1,5 @@
-export default {
-    name: "ping",
-    aliases: ["p"],
-    ownerOnly: false,
-    execute: async (sock, m, { prefix }) => {
-        await sock.sendMessage(m.key.remoteJid, { text: "Pong!" }, { quoted: m })
-    }
+export const command = ["ping", "p"]
+
+export async function run(sock, msg, { sender }) {
+    await sock.sendMessage(sender, { text: "🏓 Pong! Bot aktif." }, { quoted: msg })
 }

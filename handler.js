@@ -1,29 +1,64 @@
-import { isJidGroup, jidNormalizedUser } from "ourin-baileys"
-import { loadCommands } from "./system.js"
-import { ownerNumber, footer } from "./settings.js"
+import { readdir } from "fs/promises"
+import { join, dirname } from "path"
+import { fileURLToPath } from "url"
+import { ownerNumber } from "./settings.js"
 
-export async function handler(sock, { messages, type }) {
-    if (type !== "notify") return
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const pluginsDir = join(__dirname, "plugins")
+const plugins = {}
 
-    const m = messages[0]
-    if (!m?.message || m.key.fromMe) return
+const cleanOwner = ownerNumber.replace(/[^0-9]/g, "")
 
-    const text = m.message.conversation || m.message.extendedTextMessage?.text || ""
-    const prefix = /^[°•π÷×¶∆£¢€¥®™+✓_=|~!?@#$%^&.©^]/gi.test(text) ? text.match(/^[°•π÷×¶∆£¢€¥®™+✓_=|~!?@#$%^&.©^]/gi)[0] : "."
-    const cmd = text.startsWith(prefix) ? text.slice(1).trim().split(" ")[0].toLowerCase() : ""
-    const args = text.slice(prefix.length + cmd.length).trim().split(" ")
-    const sender = jidNormalizedUser(m.key.remoteJid)
-    const isOwner = [ownerNumber, `${ownerNumber}@s.whatsapp.net`].includes(sender)
-
-    const commands = await loadCommands()
-    const command = commands.get(cmd)
-
-    if (command && (!command.ownerOnly || isOwner)) {
-        try {
-            await command.execute(sock, m, { prefix, args, sender, isOwner, footer })
-        } catch (e) {
-            console.error(e)
-            await sock.sendMessage(m.key.remoteJid, { text: "Error executing command" }, { quoted: m })
+export async function loadPlugins() {
+    try {
+        const files = (await readdir(pluginsDir)).filter(f => f.endsWith(".js"))
+        console.log(`📂 Memuat ${files.length} plugin...`)
+        
+        for (const file of files) {
+            try {
+                const module = await import(`./plugins/${file}`)
+                if (module.command) {
+                    for (const cmd of module.command) {
+                        plugins[cmd] = module.run
+                    }
+                    console.log(`✅ Loaded: ${file} (${module.command.join(", ")})`)
+                }
+            } catch (err) {
+                console.error(`❌ Gagal load ${file}:`, err.message)
+            }
         }
+    } catch (err) {
+        console.error("Gagal baca folder plugins:", err.message)
+    }
+}
+
+export async function handler(sock, m) {
+    try {
+        const msg = m.messages[0]
+        if (!msg || !msg.message) return
+        if (msg.key.fromMe) return // Abaikan pesan dari bot sendiri
+
+        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || ""
+        if (!text.startsWith(".")) return
+
+        const senderJid = msg.key.remoteJid
+        const args = text.slice(1).trim().split(/ +/)
+        const command = args.shift().toLowerCase()
+
+        if (plugins[command]) {
+            console.log(`⚡ Command: ${command} dari ${senderJid.split("@")[0]}`)
+            try {
+                await plugins[command](sock, msg, { 
+                    args, 
+                    sender: senderJid, 
+                    isGroup: senderJid.endsWith("@g.us") 
+                })
+            } catch (e) {
+                console.error(`Error run ${command}:`, e)
+                await sock.sendMessage(senderJid, { text: "❌ Terjadi kesalahan pada sistem." })
+            }
+        }
+    } catch (err) {
+        console.error("Handler error:", err)
     }
 }

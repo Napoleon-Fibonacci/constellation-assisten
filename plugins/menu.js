@@ -1,11 +1,19 @@
-import { botName, ownerName } from "../settings.js"
+import { botName, ownerName, footer } from "../settings.js"
 
-export default {
-    name: "menu",
-    aliases: ["help", "commands"],
-    ownerOnly: false,
-    execute: async (sock, m, { prefix, footer }) => {
-        const text = `*${botName}*\n\nOwner: ${ownerName}\n\nCommands:\n- ${prefix}ping\n- ${prefix}menu\n- ${prefix}owner\n\n${footer}`
-        await sock.sendMessage(m.key.remoteJid, { text }, { quoted: m })
-    }
+export const command = ["menu", "help"]
+
+export async function run(sock, msg, { sender }) {
+    const text = `
+╭───「 ${botName} 」
+│ Hi, ${ownerName}!
+│ 
+│ Daftar Perintah:
+│ • .ping - Cek status bot
+│ • .menu - Lihat menu ini
+│ • .owner - Kontak owner
+╰──────────────
+${footer}
+`.trim()
+
+    await sock.sendMessage(sender, { text: text }, { quoted: msg })
 }
