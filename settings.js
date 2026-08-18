@@ -1,7 +1,7 @@
 // Konfigurasi Utama Bot
 export const botName = "Constellation Assistant"
 export const ownerName = "Ditzzx"
-export const ownerNumber = "6285124198168" // Ganti dengan nomor owner jika perlu
+export const ownerNumber = "628xxxxxxxxxx" // Ganti dengan nomor owner jika perlu
 
 // Metode Autentikasi
 export const usePairingCode = true // true = Pairing Code, false = QR Code
